@@ -39,3 +39,44 @@ elif age > 2000:
     print('Aliceはお前のような不死身ではない、吸血鬼め。')
 elif age > 100:
     print('Aliceじゃないね、お婆ちゃん。')
+
+# やっかいなwhileループ
+name = ''
+while name != 'あなたの名前':
+    print('あなたの名前を入力してください。')
+    name = input()
+print('どうも！')
+
+# break文とwhileの無限ループ
+while True:
+    print('あなたの名前を入力してください。')
+    name = input()
+    if name == 'あなたの名前':
+        break
+print('どうも！')
+
+# continue文は、その時点でのループの反復を終了し、whileループの条件を再評価します
+while True:
+    print('あなたはだれ？')
+    name = input()
+    if name != 'Joe':
+        continue
+    print('こんにちは、Joe。パスワードを入力してください。')
+    password = input()
+    if password == 'swordfish':
+        break
+print('認証しました。')
+
+# Falseと「みなされる」値
+# 以下の値はFalseとみなされます：False、None、0、空のコレクション（例：空の文字列、リスト、タプル、辞書など）
+# それ以外の値はTrueとみなされます
+name = ''
+while not name:
+    # このnot nameは、nameが空文字列である場合にTrueになります
+    print('あなたの名前を入力してください。')
+    name = input()
+print('同伴者は何人ですか？')
+num_of_guests = int(input())
+if num_of_guests:
+    print('同伴者用の場所があるか確認してください。')
+print('受け付けました。')
