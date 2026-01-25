@@ -61,56 +61,85 @@ st.markdown("""
         font-weight: bold;
         text-align: center;
     }
-    .mode-badge {
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-weight: bold;
-    }
 </style>
 """, unsafe_allow_html=True)
 
+# =============================================================================
+# 定数
+# =============================================================================
+CARDS = ['X', 'Y', 'Z']
+WINS_AGAINST = {'X': 'Y', 'Y': 'Z', 'Z': 'X'}  # X→Yに勝つ
+POSITION_TO_INDEX = {"左": 0, "まん中": 1, "右": 2}
 
+# 難易度設定 (閾値, モード名, アイコン)
+DIFFICULTY_LEVELS = [
+    (10, "かんたん", "🟢"),
+    (30, "やりがい", "🟡"),
+    (50, "挑戦", "🟠"),
+    (100, "鬼", "🔴"),
+    (200, "地獄篇", "💀"),
+    (float('inf'), "無限地獄篇", "👹"),
+]
+
+# =============================================================================
+# ゲームロジック関数
+# =============================================================================
 def deal_hand():
     """ランダムに3枚のカードを配る"""
-    cards = ['X', 'Y', 'Z']
-    return [random.choice(cards) for _ in range(3)]
+    return [random.choice(CARDS) for _ in range(3)]
 
 
 def get_hand_rank(hand):
-    """役の強さを判定"""
-    unique = len(set(hand))
-    if unique == 1:
-        return 3  # 3枚同じ
-    elif unique == 3:
-        return 2  # 3枚全部違う
-    else:
-        return 1  # 2枚+1枚
+    """
+    役の強さを判定
+    3: 3枚同じ（最強）, 2: 3枚全部違う（次点）, 1: 2枚+1枚（最弱）
+    """
+    unique_count = len(set(hand))
+    return {1: 3, 3: 2, 2: 1}[unique_count]
 
 
 def get_majority(hand):
-    """手札のマジョリティを返す"""
-    count = {'X': 0, 'Y': 0, 'Z': 0}
-    for card in hand:
-        count[card] += 1
-    return max(count, key=count.get)
+    """手札のマジョリティ（最も多いカード）を返す"""
+    return max(set(hand), key=hand.count)
 
 
 def get_difficulty_mode(win_count):
     """連勝数に応じた難易度モードを返す"""
-    if win_count < 10:
-        return "かんたん", "🟢"
-    elif win_count < 30:
-        return "やりがい", "🟡"
-    elif win_count < 50:
-        return "挑戦", "🟠"
-    elif win_count < 100:
-        return "鬼", "🔴"
-    elif win_count < 200:
-        return "地獄篇", "💀"
-    else:
-        return "無限地獄篇", "👹"
+    for threshold, mode, icon in DIFFICULTY_LEVELS:
+        if win_count < threshold:
+            return mode, icon
+    return DIFFICULTY_LEVELS[-1][1], DIFFICULTY_LEVELS[-1][2]
 
 
+def compare_hands(player_hand, cpu_hand):
+    """
+    手札同士を比較
+    戻り値: 1=プレイヤー勝利, -1=CPU勝利, 0=引き分け
+    """
+    player_rank = get_hand_rank(player_hand)
+    cpu_rank = get_hand_rank(cpu_hand)
+    
+    if player_rank != cpu_rank:
+        return 1 if player_rank > cpu_rank else -1
+    
+    # 同じ役同士の場合、マジョリティで勝負
+    player_maj = get_majority(player_hand)
+    cpu_maj = get_majority(cpu_hand)
+    
+    if player_maj == cpu_maj:
+        return 0
+    return 1 if WINS_AGAINST[player_maj] == cpu_maj else -1
+
+
+def get_rank_name(hand):
+    """役の名前を返す"""
+    rank = get_hand_rank(hand)
+    return {3: "3枚同じ 👑", 2: "3種全部 ⭐", 1: "2枚+1枚"}[rank]
+
+
+# =============================================================================
+# CPU関連関数
+# =============================================================================
 def get_cpu_comment(hand, win_count):
     """CPUの手札に応じたコメントを生成"""
     mode, _ = get_difficulty_mode(win_count)
@@ -119,29 +148,19 @@ def get_cpu_comment(hand, win_count):
     
     # 無限地獄篇: 30%の確率で嘘をつく
     if mode == "無限地獄篇" and random.random() < 0.3:
-        fake_majority = random.choice([c for c in ['X', 'Y', 'Z'] if c != majority])
-        fake_rank = random.choice([r for r in [1, 2, 3] if r != rank])
-        majority = fake_majority
-        rank = fake_rank
+        majority = random.choice([c for c in CARDS if c != majority])
+        rank = random.choice([r for r in [1, 2, 3] if r != rank])
     
-    # 笑い声
-    if majority == 'X':
-        laugh = "へへ！"
-    elif majority == 'Y':
-        laugh = "わっはっは、"
-    else:
-        laugh = "ゼハハハッ"
+    # 笑い声（マジョリティで決まる）
+    laughs = {'X': "へへ！", 'Y': "わっはっは、", 'Z': "ゼハハハッ"}
+    laugh = laughs[majority]
     
-    # 調子のよさ
+    # 調子のよさ（役で決まる）
     if mode in ["鬼", "地獄篇", "無限地獄篇"]:
         condition = "調子良さげだ" if rank in [2, 3] else "知らん、早くしろ"
     else:
-        if rank == 3:
-            condition = "絶好調だ"
-        elif rank == 2:
-            condition = "そこそこだ"
-        else:
-            condition = "知らん、早くしろ"
+        conditions = {3: "絶好調だ", 2: "そこそこだ", 1: "知らん、早くしろ"}
+        condition = conditions[rank]
     
     return f"「{laugh}{condition}」"
 
@@ -150,72 +169,44 @@ def get_card_reveal(cpu_hand, win_count):
     """難易度に応じてCPUのカードを開示"""
     mode, _ = get_difficulty_mode(win_count)
     
-    if mode == "かんたん":
-        return f"💡 左端は **{cpu_hand[0]}**、右端は **{cpu_hand[2]}** だ"
-    elif mode == "やりがい":
-        return f"💡 左端は **{cpu_hand[0]}** だ"
-    elif mode == "挑戦":
-        return "💡 ふふふ、教えないよ"
-    elif mode == "鬼":
-        return "💡 さあ、どうかな？"
-    elif mode == "地獄篇":
-        return "💡 交換は必須だ、覚悟しろ"
-    else:
-        return "💡 信じるか信じないかはあなた次第..."
+    reveals = {
+        "かんたん": f"💡 左端は **{cpu_hand[0]}**、右端は **{cpu_hand[2]}** だ",
+        "やりがい": f"💡 左端は **{cpu_hand[0]}** だ",
+        "挑戦": "💡 ふふふ、教えないよ",
+        "鬼": "💡 さあ、どうかな？",
+        "地獄篇": "💡 交換は必須だ、覚悟しろ",
+        "無限地獄篇": "💡 信じるか信じないかはあなた次第...",
+    }
+    return reveals.get(mode, "")
 
 
-def compare_single_card(card1, card2):
-    """単一カードの比較"""
-    if card1 == card2:
-        return 0
-    wins = {'X': 'Y', 'Y': 'Z', 'Z': 'X'}
-    return 1 if wins[card1] == card2 else -1
-
-
-def compare_hands(player_hand, cpu_hand):
-    """手札同士を比較"""
-    player_rank = get_hand_rank(player_hand)
-    cpu_rank = get_hand_rank(cpu_hand)
-    
-    if player_rank != cpu_rank:
-        return 1 if player_rank > cpu_rank else -1
-    
-    player_majority = get_majority(player_hand)
-    cpu_majority = get_majority(cpu_hand)
-    
-    return compare_single_card(player_majority, cpu_majority)
-
-
-def get_rank_name(hand):
-    """役の名前を返す"""
-    rank = get_hand_rank(hand)
-    if rank == 3:
-        return "3枚同じ 👑"
-    elif rank == 2:
-        return "3種全部 ⭐"
-    else:
-        return "2枚+1枚"
-
-
-def display_cards(hand, hidden=False):
-    """カードを表示"""
-    cards_html = ""
-    for card in hand:
-        if hidden:
-            cards_html += '<span class="card">?</span>'
-        else:
-            card_class = f"card-{card.lower()}"
-            cards_html += f'<span class="card {card_class}">{card}</span>'
+# =============================================================================
+# 表示関数
+# =============================================================================
+def display_cards(hand):
+    """カードをHTMLで表示"""
+    cards_html = "".join(
+        f'<span class="card card-{card.lower()}">{card}</span>' 
+        for card in hand
+    )
     return f'<div style="text-align: center;">{cards_html}</div>'
 
 
-# セッション状態の初期化
-if 'game_state' not in st.session_state:
-    st.session_state.game_state = 'title'
-    st.session_state.win_count = 0
-    st.session_state.player_hand = []
-    st.session_state.cpu_hand = []
-    st.session_state.message = ""
+# =============================================================================
+# セッション状態管理
+# =============================================================================
+def init_session_state():
+    """セッション状態を初期化"""
+    defaults = {
+        'game_state': 'title',
+        'win_count': 0,
+        'player_hand': [],
+        'cpu_hand': [],
+        'result_processed': False,  # 結果処理済みフラグ
+    }
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
 
 
 def start_new_round():
@@ -223,7 +214,7 @@ def start_new_round():
     st.session_state.player_hand = deal_hand()
     st.session_state.cpu_hand = deal_hand()
     st.session_state.game_state = 'playing'
-    st.session_state.exchange_done = False
+    st.session_state.result_processed = False  # リセット
 
 
 def reset_game():
@@ -232,9 +223,19 @@ def reset_game():
     st.session_state.win_count = 0
     st.session_state.player_hand = []
     st.session_state.cpu_hand = []
+    st.session_state.result_processed = False
 
 
+# 初期化
+init_session_state()
+
+# =============================================================================
+# 画面表示
+# =============================================================================
+
+# -----------------------------------------------------------------------------
 # タイトル画面
+# -----------------------------------------------------------------------------
 if st.session_state.game_state == 'title':
     st.markdown("# 🎴 X/Y/Z カード対戦ゲーム")
     
@@ -280,8 +281,9 @@ if st.session_state.game_state == 'title':
         start_new_round()
         st.rerun()
 
-
+# -----------------------------------------------------------------------------
 # ゲームプレイ画面
+# -----------------------------------------------------------------------------
 elif st.session_state.game_state == 'playing':
     mode, mode_icon = get_difficulty_mode(st.session_state.win_count)
     
@@ -293,14 +295,12 @@ elif st.session_state.game_state == 'playing':
         st.markdown(f"### {mode_icon} {mode}モード")
     
     st.markdown(f"### 🏆 現在 {st.session_state.win_count} 連勝中")
-    
     st.markdown("---")
     
     # プレイヤーの手札
     st.markdown("### 🎴 あなたの手札")
     st.markdown(display_cards(st.session_state.player_hand), unsafe_allow_html=True)
     st.markdown(f"**役: {get_rank_name(st.session_state.player_hand)}**")
-    
     st.markdown("---")
     
     # CPUのコメント
@@ -308,46 +308,28 @@ elif st.session_state.game_state == 'playing':
     cpu_comment = get_cpu_comment(st.session_state.cpu_hand, st.session_state.win_count)
     st.markdown(f'<div class="cpu-comment">{cpu_comment}</div>', unsafe_allow_html=True)
     st.markdown(get_card_reveal(st.session_state.cpu_hand, st.session_state.win_count))
-    
     st.markdown("---")
     
     # 交換選択
     st.markdown("### 🔄 カード交換")
-    
-    # 地獄篇以上は交換必須
     can_skip = mode not in ["地獄篇", "無限地獄篇"]
     
     col1, col2 = st.columns(2)
-    
     with col1:
         st.markdown("**CPUのカードを選択:**")
-        cpu_choice = st.radio(
-            "CPU",
-            ["左", "まん中", "右"],
-            horizontal=True,
-            label_visibility="collapsed"
-        )
-    
+        cpu_choice = st.radio("CPU", ["左", "まん中", "右"], horizontal=True, label_visibility="collapsed")
     with col2:
         st.markdown("**あなたのカードを選択:**")
-        player_choice = st.radio(
-            "Player",
-            ["左", "まん中", "右"],
-            horizontal=True,
-            label_visibility="collapsed"
-        )
+        player_choice = st.radio("Player", ["左", "まん中", "右"], horizontal=True, label_visibility="collapsed")
     
     col1, col2 = st.columns(2)
-    
     with col1:
         if st.button("🔄 交換して勝負！", type="primary", use_container_width=True):
-            cpu_index = {"左": 0, "まん中": 1, "右": 2}[cpu_choice]
-            player_index = {"左": 0, "まん中": 1, "右": 2}[player_choice]
-            
+            cpu_idx = POSITION_TO_INDEX[cpu_choice]
+            player_idx = POSITION_TO_INDEX[player_choice]
             # 交換実行
-            st.session_state.player_hand[player_index], st.session_state.cpu_hand[cpu_index] = \
-                st.session_state.cpu_hand[cpu_index], st.session_state.player_hand[player_index]
-            
+            st.session_state.player_hand[player_idx], st.session_state.cpu_hand[cpu_idx] = \
+                st.session_state.cpu_hand[cpu_idx], st.session_state.player_hand[player_idx]
             st.session_state.game_state = 'result'
             st.rerun()
     
@@ -359,13 +341,18 @@ elif st.session_state.game_state == 'playing':
         else:
             st.button("🚫 交換必須！", disabled=True, use_container_width=True)
 
-
+# -----------------------------------------------------------------------------
 # 結果画面
+# -----------------------------------------------------------------------------
 elif st.session_state.game_state == 'result':
     result = compare_hands(st.session_state.player_hand, st.session_state.cpu_hand)
     
-    st.markdown("## 🎯 対戦結果")
+    # 勝利時のカウントアップは一度だけ実行
+    if result == 1 and not st.session_state.result_processed:
+        st.session_state.win_count += 1
+        st.session_state.result_processed = True
     
+    st.markdown("## 🎯 対戦結果")
     st.markdown("---")
     
     # CPUの手札
@@ -373,29 +360,27 @@ elif st.session_state.game_state == 'result':
     st.markdown(display_cards(st.session_state.cpu_hand), unsafe_allow_html=True)
     st.markdown(f"**役: {get_rank_name(st.session_state.cpu_hand)}**")
     
+    # プレイヤーの手札
     st.markdown("### 🎴 あなたの手札")
     st.markdown(display_cards(st.session_state.player_hand), unsafe_allow_html=True)
     st.markdown(f"**役: {get_rank_name(st.session_state.player_hand)}**")
-    
     st.markdown("---")
     
     # 勝敗表示
     if result == 1:
         st.markdown('<div class="win-text">🎉 勝利！！ 🎉</div>', unsafe_allow_html=True)
         
-        st.session_state.win_count += 1
-        
         # 難易度変更通知
-        if st.session_state.win_count == 10:
-            st.warning("🔥 やりがいモード突入！ヒントが減ります...")
-        elif st.session_state.win_count == 30:
-            st.warning("🔥🔥 挑戦モード突入！カード開示がなくなります...")
-        elif st.session_state.win_count == 50:
-            st.warning("🔥🔥🔥 鬼モード突入！役のヒントが曖昧に...")
-        elif st.session_state.win_count == 100:
-            st.error("💀 地獄篇突入！交換は必須になります...")
-        elif st.session_state.win_count == 200:
-            st.error("👹 無限地獄篇突入！CPUが嘘をつくようになります...")
+        milestone_messages = {
+            10: ("warning", "🔥 やりがいモード突入！ヒントが減ります..."),
+            30: ("warning", "🔥🔥 挑戦モード突入！カード開示がなくなります..."),
+            50: ("warning", "🔥🔥🔥 鬼モード突入！役のヒントが曖昧に..."),
+            100: ("error", "💀 地獄篇突入！交換は必須になります..."),
+            200: ("error", "👹 無限地獄篇突入！CPUが嘘をつくようになります..."),
+        }
+        if st.session_state.win_count in milestone_messages:
+            msg_type, msg = milestone_messages[st.session_state.win_count]
+            getattr(st, msg_type)(msg)
         
         st.markdown(f'<div class="result-text">🏆 {st.session_state.win_count} 連勝！</div>', unsafe_allow_html=True)
         
@@ -405,14 +390,13 @@ elif st.session_state.game_state == 'result':
             
     elif result == -1:
         st.markdown('<div class="lose-text">💀 敗北... 💀</div>', unsafe_allow_html=True)
-        
         st.markdown(f'<div class="result-text">最終結果: {st.session_state.win_count} 連勝でした！</div>', unsafe_allow_html=True)
         
         if st.button("🔄 もう一度プレイ", type="primary", use_container_width=True):
             reset_game()
             st.rerun()
     
-    else:
+    else:  # 引き分け
         st.markdown('<div class="draw-text">😐 引き分け！</div>', unsafe_allow_html=True)
         st.markdown('<div class="result-text">カードを配り直します...</div>', unsafe_allow_html=True)
         
@@ -420,10 +404,11 @@ elif st.session_state.game_state == 'result':
             start_new_round()
             st.rerun()
 
-
+# -----------------------------------------------------------------------------
 # フッター
+# -----------------------------------------------------------------------------
 st.markdown("---")
 st.markdown(
-    "<div style='text-align: center; color: #888;'>X/Y/Z カード対戦ゲーム v1.0</div>",
+    "<div style='text-align: center; color: #888;'>X/Y/Z カード対戦ゲーム v1.1</div>",
     unsafe_allow_html=True
 )
