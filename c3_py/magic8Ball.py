@@ -23,3 +23,9 @@ def get_answer(answer_number):
 r = random.randint(1,9) #1も9も含まれる
 fortune = get_answer(r)
 print(fortune)
+
+# endとsepパラメータ
+print('Hello', end=' ')
+print('World')
+print('cats', 'dogs', 'mice', sep=', ')
+print('cats', 'dogs', 'mice', sep=' <-> ')
