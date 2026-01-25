@@ -201,6 +201,33 @@ def compare_hands(player_hand, cpu_hand):
     return 1 if WINS_AGAINST[player_maj] == cpu_maj else -1
 
 
+def exchange_cards(player_hand, cpu_hand, player_pos, cpu_pos):
+    """指定位置のカードを交換して、新しい手札と交換ログを返す"""
+    player_idx = POSITION_TO_INDEX[player_pos]
+    cpu_idx = POSITION_TO_INDEX[cpu_pos]
+
+    new_player_hand = list(player_hand)
+    new_cpu_hand = list(cpu_hand)
+
+    before_player = new_player_hand[player_idx]
+    before_cpu = new_cpu_hand[cpu_idx]
+
+    new_player_hand[player_idx], new_cpu_hand[cpu_idx] = before_cpu, before_player
+
+    exchange_log = {
+        "player_pos": player_pos,
+        "cpu_pos": cpu_pos,
+        "player_idx": player_idx,
+        "cpu_idx": cpu_idx,
+        "before_player": before_player,
+        "before_cpu": before_cpu,
+        "after_player": new_player_hand[player_idx],
+        "after_cpu": new_cpu_hand[cpu_idx],
+        "no_visible_change": before_player == before_cpu,
+    }
+    return new_player_hand, new_cpu_hand, exchange_log
+
+
 def get_rank_name(hand):
     """役の名前を返す"""
     rank = get_hand_rank(hand)
@@ -301,6 +328,7 @@ def init_session_state():
         'player_hand': [],
         'cpu_hand': [],
         'result_processed': False,  # 結果処理済みフラグ
+        'last_exchange': None,  # 直近の交換ログ（なければNone）
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -313,6 +341,7 @@ def start_new_round():
     st.session_state.cpu_hand = deal_hand()
     st.session_state.game_state = 'playing'
     st.session_state.result_processed = False  # リセット
+    st.session_state.last_exchange = None
 
 
 def reset_game():
@@ -322,6 +351,7 @@ def reset_game():
     st.session_state.player_hand = []
     st.session_state.cpu_hand = []
     st.session_state.result_processed = False
+    st.session_state.last_exchange = None
 
 
 # 初期化
@@ -430,25 +460,42 @@ elif st.session_state.game_state == 'playing':
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("**あなたのカードを選択:**")
-            player_choice = st.radio("Player", ["左", "まん中", "右"], horizontal=True, label_visibility="collapsed")
+            player_choice = st.radio(
+                "Player",
+                ["左", "まん中", "右"],
+                horizontal=True,
+                label_visibility="collapsed",
+                key="player_choice",
+            )
         with col2:
             st.markdown("**CPUのカードを選択:**")
-            cpu_choice = st.radio("CPU", ["左", "まん中", "右"], horizontal=True, label_visibility="collapsed")
+            cpu_choice = st.radio(
+                "CPU",
+                ["左", "まん中", "右"],
+                horizontal=True,
+                label_visibility="collapsed",
+                key="cpu_choice",
+            )
 
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🔄 交換して勝負！", type="primary", use_container_width=True):
-                cpu_idx = POSITION_TO_INDEX[cpu_choice]
-                player_idx = POSITION_TO_INDEX[player_choice]
-                # 交換実行
-                st.session_state.player_hand[player_idx], st.session_state.cpu_hand[cpu_idx] = \
-                    st.session_state.cpu_hand[cpu_idx], st.session_state.player_hand[player_idx]
+                new_player_hand, new_cpu_hand, exchange_log = exchange_cards(
+                    st.session_state.player_hand,
+                    st.session_state.cpu_hand,
+                    player_choice,
+                    cpu_choice,
+                )
+                st.session_state.player_hand = new_player_hand
+                st.session_state.cpu_hand = new_cpu_hand
+                st.session_state.last_exchange = exchange_log
                 st.session_state.game_state = 'result'
                 st.rerun()
 
         with col2:
             if can_skip:
                 if st.button("⏭️ 交換せずに勝負！", use_container_width=True):
+                    st.session_state.last_exchange = None
                     st.session_state.game_state = 'result'
                     st.rerun()
             else:
@@ -482,6 +529,19 @@ elif st.session_state.game_state == 'result':
     
     st.markdown("## 🎯 対戦結果")
     st.markdown("---")
+
+    # 交換ログ（交換したのに変わって見えない、位置が違う等の検証用）
+    if st.session_state.get("last_exchange"):
+        log = st.session_state.last_exchange
+        msg = (
+            f"交換ログ: あなた[{log['player_pos']}] {log['before_player']} ↔ "
+            f"CPU[{log['cpu_pos']}] {log['before_cpu']}"
+        )
+        if log.get("no_visible_change"):
+            msg += "（同じカード同士なので見た目は変わりません）"
+        st.info(msg)
+    else:
+        st.caption("交換ログ: 今回は交換なし")
     
     # CPUの手札
     st.markdown("### 🤖 CPUの手札")
