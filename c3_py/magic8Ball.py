@@ -19,7 +19,7 @@ def get_answer(answer_number):
         return '見通しはそれほど良くない'
     elif answer_number == 9:
         return '非常に疑わしい'
-    
-    r = random.randint(1,9) #1も9も含まれる
-    fortune = get_answer(r)
-    print(fortune)
+
+r = random.randint(1,9) #1も9も含まれる
+fortune = get_answer(r)
+print(fortune)
