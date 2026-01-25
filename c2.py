@@ -100,3 +100,36 @@ print('0から10まで2ずつ増加させます：')
 for i in range(0, 10, 2):
     print(i)
 
+# モジュールのインポート
+import random
+for i in range(5):
+    print(random.randint(1,10)) 
+# モジュール名を、自分のPythonファイル名につけてしまわないように注意してください
+
+import random, sys, os, math
+
+# sys.exit()でプログラムを終了する
+# while True:
+#     print('終了するには exitと入力してください。')
+#     response = input()
+#     if response == 'exit':
+#         sys.exit()
+#     print(response + 'と入力されました。')
+
+# 最終課題
+import random
+secret_number = random.randint(1, 20)
+print('1から20までの数字を当ててください。')
+for guesses_taken in range(1, 7):
+    print('数字を入力してください。')
+    guess = int(input())
+    if guess < secret_number:
+        print('あなたの推定値は小さいです。')
+    elif guess > secret_number:
+        print('あなたの推定値は大きいです。')
+    else:
+        break  # 当たり！
+if guess == secret_number:
+    print('当たり！' + str(guesses_taken) + '回で当たりました！')
+else:
+    print('残念！正解は ' + str(secret_number) + ' でした。')
