@@ -15,51 +15,79 @@ st.set_page_config(
 # カスタムCSS
 st.markdown("""
 <style>
+    /* スマホ対応: 余白を減らす */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 0rem !important;
+    }
+    h1, h2, h3 {
+        margin-top: 0.3rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+    p, .stMarkdown {
+        margin-bottom: 0.2rem !important;
+    }
+    hr {
+        margin: 0.3rem 0 !important;
+    }
     .card {
         display: inline-block;
-        font-size: 2rem;
-        padding: 15px 25px;
-        margin: 5px;
+        font-size: 1.5rem;
+        padding: 10px 18px;
+        margin: 3px;
         border: 3px solid #333;
-        border-radius: 10px;
+        border-radius: 8px;
         background: linear-gradient(145deg, #ffffff, #e6e6e6);
-        box-shadow: 5px 5px 10px #999;
+        box-shadow: 3px 3px 6px #999;
     }
     .card-x { border-color: #e74c3c; color: #e74c3c; }
     .card-y { border-color: #3498db; color: #3498db; }
     .card-z { border-color: #2ecc71; color: #2ecc71; }
     .win-text { 
         color: #27ae60; 
-        font-size: 3rem; 
+        font-size: 2.2rem; 
         font-weight: bold;
         text-align: center;
+        margin: 0.3rem 0 !important;
     }
     .lose-text { 
         color: #e74c3c; 
-        font-size: 3rem; 
+        font-size: 2.2rem; 
         font-weight: bold;
         text-align: center;
+        margin: 0.3rem 0 !important;
     }
     .draw-text { 
         color: #f39c12; 
-        font-size: 3rem; 
+        font-size: 2.2rem; 
         font-weight: bold;
         text-align: center;
+        margin: 0.3rem 0 !important;
     }
     .cpu-comment {
-        font-size: 1.8rem;
+        font-size: 1.4rem;
         font-weight: bold;
         text-align: center;
-        padding: 20px;
+        padding: 12px;
         background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
-        border-radius: 15px;
-        margin: 10px 0;
+        border-radius: 10px;
+        margin: 5px 0;
         color: #333333;
     }
     .result-text {
-        font-size: 2rem;
+        font-size: 1.5rem;
         font-weight: bold;
         text-align: center;
+        margin: 0.3rem 0 !important;
+    }
+    /* ボタンの余白を減らす */
+    .stButton > button {
+        margin-top: 0.2rem;
+        margin-bottom: 0.2rem;
+    }
+    /* ラジオボタンの余白を減らす */
+    .stRadio > div {
+        gap: 0.3rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -151,16 +179,19 @@ def get_cpu_comment(hand, win_count):
         majority = random.choice([c for c in CARDS if c != majority])
         rank = random.choice([r for r in [1, 2, 3] if r != rank])
     
+    # 3種全部の場合は笑い声なしで「まあ、そこそこだ」
+    if rank == 2:
+        return "「まあ、そこそこだ」"
+    
     # 笑い声（マジョリティで決まる）
     laughs = {'X': "へへ！", 'Y': "わっはっは、", 'Z': "ゼハハハッ"}
     laugh = laughs[majority]
     
     # 調子のよさ（役で決まる）
     if mode in ["鬼", "地獄篇", "無限地獄篇"]:
-        condition = "調子良さげだ" if rank in [2, 3] else "知らん、早くしろ"
+        condition = "調子良さげだ" if rank == 3 else "知らん、早くしろ"
     else:
-        conditions = {3: "絶好調だ", 2: "そこそこだ", 1: "知らん、早くしろ"}
-        condition = conditions[rank]
+        condition = "絶好調だ" if rank == 3 else "知らん、早くしろ"
     
     return f"「{laugh}{condition}」"
 
