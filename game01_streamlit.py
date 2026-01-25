@@ -388,11 +388,11 @@ elif st.session_state.game_state == 'playing':
     
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("**CPUのカードを選択:**")
-        cpu_choice = st.radio("CPU", ["左", "まん中", "右"], horizontal=True, label_visibility="collapsed")
-    with col2:
         st.markdown("**あなたのカードを選択:**")
         player_choice = st.radio("Player", ["左", "まん中", "右"], horizontal=True, label_visibility="collapsed")
+    with col2:
+        st.markdown("**CPUのカードを選択:**")
+        cpu_choice = st.radio("CPU", ["左", "まん中", "右"], horizontal=True, label_visibility="collapsed")
     
     col1, col2 = st.columns(2)
     with col1:
