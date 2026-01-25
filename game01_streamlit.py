@@ -96,6 +96,15 @@ st.markdown("""
     .stRadio > div {
         gap: 0.2rem;
     }
+    /* テーブルの文字サイズを抑えて折り返しを減らす */
+    .stMarkdown table {
+        font-size: 0.85rem !important;
+        table-layout: auto;
+    }
+    .stMarkdown th, .stMarkdown td {
+        padding: 4px 6px !important;
+        white-space: nowrap;
+    }
     /* モバイル用の文字サイズ調整 */
     @media (max-width: 480px) {
         h1 { font-size: 1.4rem !important; }
