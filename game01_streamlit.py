@@ -291,29 +291,39 @@ if st.session_state.game_state == 'title':
     st.markdown("# 🎴 X/Y/Z カード対戦ゲーム")
     
     with st.expander("📖 ルール説明", expanded=False):
-        st.markdown("""
-        ### 基本ルール
-        - X/Y/Zの3枚がランダムに配られます
-        - **力関係**: X→Yに勝つ, Y→Zに勝つ, Z→Xに勝つ
-        
-        ### 役の強さ
-        1. 👑 **3枚同じ** (例: X,X,X) - 最強
-        2. ⭐ **3枚全部違う** (例: X,Y,Z) - 次点
-        3. **2枚+1枚** (例: X,X,Y) - 最弱
-        
-        ### CPUのヒント解読
-        | 笑い声 | 意味 |
-        |--------|------|
-        | 「へへ！」 | X多め |
-        | 「わっはっは、」 | Y多め |
-        | 「ゼハハハッ」 | Z多め |
-        
-        | 調子 | 意味 |
-        |------|------|
-        | 「絶好調だ」 | 3枚同じ |
-        | 「そこそこだ」 | 3枚全部違う |
-        | 「知らん、早くしろ」 | 2枚+1枚 |
-        """)
+        rules_col1, rules_col2 = st.columns(2)
+        with rules_col1:
+            st.markdown("""
+            **基本ルール**
+            - X/Y/Zの3枚がランダムに配られます
+            - **力関係**: X→Yに勝つ, Y→Zに勝つ, Z→Xに勝つ
+            """)
+        with rules_col2:
+            st.markdown("""
+            **役の強さ**
+            1. 👑 **3枚同じ** (例: X,X,X) - 最強
+            2. ⭐ **3枚全部違う** (例: X,Y,Z) - 次点
+            3. **2枚+1枚** (例: X,X,Y) - 最弱
+            """)
+
+        st.markdown("**CPUのヒント解読**")
+        hint_col1, hint_col2 = st.columns(2)
+        with hint_col1:
+            st.markdown("""
+            | 笑い声 | 意味 |
+            |--------|------|
+            | 「へへ！」 | X多め |
+            | 「わっはっは、」 | Y多め |
+            | 「ゼハハハッ」 | Z多め |
+            """)
+        with hint_col2:
+            st.markdown("""
+            | 調子 | 意味 |
+            |------|------|
+            | 「絶好調だ」 | 3枚同じ |
+            | 「まあ、そこそこだ」 | 3枚全部違う |
+            | 「知らん、早くしろ」 | 2枚+1枚 |
+            """)
     
     with st.expander("🔥 難易度モード", expanded=False):
         st.markdown("""
@@ -344,16 +354,22 @@ elif st.session_state.game_state == 'playing':
     )
     st.markdown("---")
     
-    # プレイヤーの手札
-    st.markdown("### 🎴 あなたの手札")
-    st.markdown(display_cards(st.session_state.player_hand), unsafe_allow_html=True)
+    # プレイヤーの手札（横並び）
+    hand_col1, hand_col2 = st.columns([1, 3])
+    with hand_col1:
+        st.markdown("**🎴 あなたの手札**")
+    with hand_col2:
+        st.markdown(display_cards(st.session_state.player_hand), unsafe_allow_html=True)
     st.markdown(f"**役: {get_rank_name(st.session_state.player_hand)}**")
     st.markdown("---")
     
-    # CPUのコメント
-    st.markdown("### 🤖 CPUのコメント")
-    cpu_comment = get_cpu_comment(st.session_state.cpu_hand, st.session_state.win_count)
-    st.markdown(f'<div class="cpu-comment">{cpu_comment}</div>', unsafe_allow_html=True)
+    # CPUのコメント（横並び）
+    cpu_col1, cpu_col2 = st.columns([1, 3])
+    with cpu_col1:
+        st.markdown("**🤖 CPUのコメント**")
+    with cpu_col2:
+        cpu_comment = get_cpu_comment(st.session_state.cpu_hand, st.session_state.win_count)
+        st.markdown(f'<div class="cpu-comment">{cpu_comment}</div>', unsafe_allow_html=True)
     st.markdown(get_card_reveal(st.session_state.cpu_hand, st.session_state.win_count))
     st.markdown("---")
     
