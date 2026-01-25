@@ -28,9 +28,38 @@ st.markdown("""
     .card-x { border-color: #e74c3c; color: #e74c3c; }
     .card-y { border-color: #3498db; color: #3498db; }
     .card-z { border-color: #2ecc71; color: #2ecc71; }
-    .win-text { color: #27ae60; font-size: 2rem; }
-    .lose-text { color: #e74c3c; font-size: 2rem; }
-    .draw-text { color: #f39c12; font-size: 2rem; }
+    .win-text { 
+        color: #27ae60; 
+        font-size: 3rem; 
+        font-weight: bold;
+        text-align: center;
+    }
+    .lose-text { 
+        color: #e74c3c; 
+        font-size: 3rem; 
+        font-weight: bold;
+        text-align: center;
+    }
+    .draw-text { 
+        color: #f39c12; 
+        font-size: 3rem; 
+        font-weight: bold;
+        text-align: center;
+    }
+    .cpu-comment {
+        font-size: 1.8rem;
+        font-weight: bold;
+        text-align: center;
+        padding: 20px;
+        background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
+        border-radius: 15px;
+        margin: 10px 0;
+    }
+    .result-text {
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: center;
+    }
     .mode-badge {
         padding: 5px 15px;
         border-radius: 20px;
@@ -275,7 +304,8 @@ elif st.session_state.game_state == 'playing':
     
     # CPUのコメント
     st.markdown("### 🤖 CPUのコメント")
-    st.info(get_cpu_comment(st.session_state.cpu_hand, st.session_state.win_count))
+    cpu_comment = get_cpu_comment(st.session_state.cpu_hand, st.session_state.win_count)
+    st.markdown(f'<div class="cpu-comment">{cpu_comment}</div>', unsafe_allow_html=True)
     st.markdown(get_card_reveal(st.session_state.cpu_hand, st.session_state.win_count))
     
     st.markdown("---")
@@ -350,8 +380,7 @@ elif st.session_state.game_state == 'result':
     
     # 勝敗表示
     if result == 1:
-        st.markdown('<p class="win-text">🎉 勝利！！ 🎉</p>', unsafe_allow_html=True)
-        st.balloons()
+        st.markdown('<div class="win-text">🎉 勝利！！ 🎉</div>', unsafe_allow_html=True)
         
         st.session_state.win_count += 1
         
@@ -367,25 +396,24 @@ elif st.session_state.game_state == 'result':
         elif st.session_state.win_count == 200:
             st.error("👹 無限地獄篇突入！CPUが嘘をつくようになります...")
         
-        st.markdown(f"### 🏆 {st.session_state.win_count} 連勝！")
+        st.markdown(f'<div class="result-text">🏆 {st.session_state.win_count} 連勝！</div>', unsafe_allow_html=True)
         
         if st.button("▶️ 次の対戦へ", type="primary", use_container_width=True):
             start_new_round()
             st.rerun()
             
     elif result == -1:
-        st.markdown('<p class="lose-text">💀 敗北... 💀</p>', unsafe_allow_html=True)
-        st.snow()
+        st.markdown('<div class="lose-text">💀 敗北... 💀</div>', unsafe_allow_html=True)
         
-        st.markdown(f"### 最終結果: {st.session_state.win_count} 連勝でした！")
+        st.markdown(f'<div class="result-text">最終結果: {st.session_state.win_count} 連勝でした！</div>', unsafe_allow_html=True)
         
         if st.button("🔄 もう一度プレイ", type="primary", use_container_width=True):
             reset_game()
             st.rerun()
     
     else:
-        st.markdown('<p class="draw-text">😐 引き分け！</p>', unsafe_allow_html=True)
-        st.markdown("カードを配り直します...")
+        st.markdown('<div class="draw-text">😐 引き分け！</div>', unsafe_allow_html=True)
+        st.markdown('<div class="result-text">カードを配り直します...</div>', unsafe_allow_html=True)
         
         if st.button("🔄 再配布", type="primary", use_container_width=True):
             start_new_round()
