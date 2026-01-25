@@ -80,3 +80,23 @@ num_of_guests = int(input())
 if num_of_guests:
     print('同伴者用の場所があるか確認してください。')
 print('受け付けました。')
+
+# forループとrange()関数
+# whileループは条件式がTrueの間繰り返し実行されますが、forループは指定された回数だけ繰り返し実行されます
+print('私の名前は')
+for i in range(5):
+    print('石川五右衛門 (' + str(i+1) +'回目)')
+    # range()関数は0から始まるため、iに1を足しています
+
+total = 0
+for num in range(101):
+    total = total + num
+print(total)
+
+# range()関数は、開始値、終了値、ステップ値を指定することもできます
+# 以下の例では、0から10まで2ずつ増加させています
+# 注意点として、終了値の10は含まれません
+print('0から10まで2ずつ増加させます：')
+for i in range(0, 10, 2):
+    print(i)
+
