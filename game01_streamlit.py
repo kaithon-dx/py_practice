@@ -94,6 +94,7 @@ st.markdown("""
         border: 1px solid #e2e2e2;
         border-radius: 8px;
         padding: 6px 8px;
+        color: #222222;
     }
     /* ボタンの余白を減らす */
     .stButton > button {
