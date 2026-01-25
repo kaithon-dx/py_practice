@@ -4,10 +4,12 @@ X/Y/Z カード対戦ゲーム - Streamlit版
 
 import streamlit as st
 import random
+import urllib.parse
 
 # ページ設定
 st.set_page_config(
     page_title="X/Y/Z カード対戦",
+    
     page_icon="🎴",
     layout="centered",
     initial_sidebar_state="collapsed"
@@ -122,6 +124,8 @@ st.markdown("""
 CARDS = ['X', 'Y', 'Z']
 WINS_AGAINST = {'X': 'Y', 'Y': 'Z', 'Z': 'X'}  # X→Yに勝つ
 POSITION_TO_INDEX = {"左": 0, "まん中": 1, "右": 2}
+APP_URL = "https://testgame0125.streamlit.app"
+SHARE_HASHTAG = "#XYZカード対戦"
 
 # 難易度設定 (閾値, モード名, アイコン)
 DIFFICULTY_LEVELS = [
@@ -192,6 +196,31 @@ def get_rank_name(hand):
     """役の名前を返す"""
     rank = get_hand_rank(hand)
     return {3: "3枚同じ 👑", 2: "3種全部 ⭐", 1: "2枚+1枚"}[rank]
+
+
+def build_share_text(win_count, result_label):
+    """SNS共有用テキストを生成"""
+    return f"{result_label}！連勝記録は{win_count}連勝でした。{SHARE_HASHTAG}"
+
+
+def render_share_section(win_count, result_label):
+    """SNS共有セクションを表示"""
+    share_text = build_share_text(win_count, result_label)
+    tweet_text = urllib.parse.quote(share_text)
+    tweet_url = urllib.parse.quote(APP_URL)
+    x_share_url = f"https://twitter.com/intent/tweet?text={tweet_text}&url={tweet_url}"
+
+    st.markdown("**SNSで連勝記録を知らせよう**")
+    col_share1, col_share2 = st.columns(2)
+    with col_share1:
+        st.link_button("Xで投稿", x_share_url, use_container_width=True)
+    with col_share2:
+        st.link_button("Instagramを開く", "https://www.instagram.com/", use_container_width=True)
+    st.text_input(
+        "Instagram用キャプション（コピーして投稿）",
+        value=f"{share_text} {APP_URL}",
+        label_visibility="collapsed",
+    )
 
 
 # =============================================================================
@@ -455,6 +484,7 @@ elif st.session_state.game_state == 'result':
             getattr(st, msg_type)(msg)
         
         st.markdown(f'<div class="result-text">🏆 {st.session_state.win_count} 連勝！</div>', unsafe_allow_html=True)
+        render_share_section(st.session_state.win_count, "勝利")
         
         if st.button("▶️ 次の対戦へ", type="primary", use_container_width=True):
             start_new_round()
@@ -463,6 +493,7 @@ elif st.session_state.game_state == 'result':
     elif result == -1:
         st.markdown('<div class="lose-text">💀 敗北... 💀</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="result-text">最終結果: {st.session_state.win_count} 連勝でした！</div>', unsafe_allow_html=True)
+        render_share_section(st.session_state.win_count, "敗北")
         
         if st.button("🔄 もう一度プレイ", type="primary", use_container_width=True):
             reset_game()
