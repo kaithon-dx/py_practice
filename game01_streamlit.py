@@ -54,6 +54,7 @@ st.markdown("""
         background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
         border-radius: 15px;
         margin: 10px 0;
+        color: #333333;
     }
     .result-text {
         font-size: 2rem;
