@@ -87,6 +87,14 @@ st.markdown("""
         text-align: center;
         margin: 0.2rem 0 !important;
     }
+    .help-box {
+        font-size: 0.85rem;
+        line-height: 1.2;
+        background: #f7f7f7;
+        border: 1px solid #e2e2e2;
+        border-radius: 8px;
+        padding: 6px 8px;
+    }
     /* ボタンの余白を減らす */
     .stButton > button {
         margin-top: 0.1rem;
@@ -411,36 +419,54 @@ elif st.session_state.game_state == 'playing':
     st.markdown(get_card_reveal(st.session_state.cpu_hand, st.session_state.win_count))
     st.markdown("---")
     
-    # 交換選択
-    st.markdown("### 🔄 カード交換")
-    can_skip = mode not in ["地獄篇", "無限地獄篇"]
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("**あなたのカードを選択:**")
-        player_choice = st.radio("Player", ["左", "まん中", "右"], horizontal=True, label_visibility="collapsed")
-    with col2:
-        st.markdown("**CPUのカードを選択:**")
-        cpu_choice = st.radio("CPU", ["左", "まん中", "右"], horizontal=True, label_visibility="collapsed")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🔄 交換して勝負！", type="primary", use_container_width=True):
-            cpu_idx = POSITION_TO_INDEX[cpu_choice]
-            player_idx = POSITION_TO_INDEX[player_choice]
-            # 交換実行
-            st.session_state.player_hand[player_idx], st.session_state.cpu_hand[cpu_idx] = \
-                st.session_state.cpu_hand[cpu_idx], st.session_state.player_hand[player_idx]
-            st.session_state.game_state = 'result'
-            st.rerun()
-    
-    with col2:
-        if can_skip:
-            if st.button("⏭️ 交換せずに勝負！", use_container_width=True):
+    # 交換選択 + ミニルール表示
+    exchange_col, help_col = st.columns([3, 2])
+
+    with exchange_col:
+        st.markdown("### 🔄 カード交換")
+        can_skip = mode not in ["地獄篇", "無限地獄篇"]
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("**あなたのカードを選択:**")
+            player_choice = st.radio("Player", ["左", "まん中", "右"], horizontal=True, label_visibility="collapsed")
+        with col2:
+            st.markdown("**CPUのカードを選択:**")
+            cpu_choice = st.radio("CPU", ["左", "まん中", "右"], horizontal=True, label_visibility="collapsed")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔄 交換して勝負！", type="primary", use_container_width=True):
+                cpu_idx = POSITION_TO_INDEX[cpu_choice]
+                player_idx = POSITION_TO_INDEX[player_choice]
+                # 交換実行
+                st.session_state.player_hand[player_idx], st.session_state.cpu_hand[cpu_idx] = \
+                    st.session_state.cpu_hand[cpu_idx], st.session_state.player_hand[player_idx]
                 st.session_state.game_state = 'result'
                 st.rerun()
-        else:
-            st.button("🚫 交換必須！", disabled=True, use_container_width=True)
+
+        with col2:
+            if can_skip:
+                if st.button("⏭️ 交換せずに勝負！", use_container_width=True):
+                    st.session_state.game_state = 'result'
+                    st.rerun()
+            else:
+                st.button("🚫 交換必須！", disabled=True, use_container_width=True)
+
+    with help_col:
+        st.markdown("**ミニルール**")
+        st.markdown(
+            """
+            <div class="help-box">
+            <div>・力関係：X＞Y＞Z＞X</div>
+            <div>・役：同3枚 ＞ 全部違う ＞ 2枚+1枚</div>
+            <div>・同役はマジョリティ勝負</div>
+            <hr style="margin:4px 0;" />
+            <div>・地獄篇以上は交換必須</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 # -----------------------------------------------------------------------------
 # 結果画面
@@ -484,11 +510,12 @@ elif st.session_state.game_state == 'result':
             getattr(st, msg_type)(msg)
         
         st.markdown(f'<div class="result-text">🏆 {st.session_state.win_count} 連勝！</div>', unsafe_allow_html=True)
-        render_share_section(st.session_state.win_count, "勝利")
         
         if st.button("▶️ 次の対戦へ", type="primary", use_container_width=True):
             start_new_round()
             st.rerun()
+
+        render_share_section(st.session_state.win_count, "勝利")
             
     elif result == -1:
         st.markdown('<div class="lose-text">💀 敗北... 💀</div>', unsafe_allow_html=True)
