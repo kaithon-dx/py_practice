@@ -9,85 +9,100 @@ import random
 st.set_page_config(
     page_title="X/Y/Z カード対戦",
     page_icon="🎴",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
 # カスタムCSS
 st.markdown("""
 <style>
-    /* スマホ対応: 余白を減らす */
+    /* スマホ対応: 余白・フォントをさらに圧縮 */
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 0.6rem !important;
         padding-bottom: 0rem !important;
     }
-    h1, h2, h3 {
-        margin-top: 0.3rem !important;
-        margin-bottom: 0.3rem !important;
+    h1, h2, h3, h4, h5 {
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
+        line-height: 1.1 !important;
     }
     p, .stMarkdown {
-        margin-bottom: 0.2rem !important;
+        margin-bottom: 0.15rem !important;
+        line-height: 1.2 !important;
     }
     hr {
-        margin: 0.3rem 0 !important;
+        margin: 0.2rem 0 !important;
     }
+    /* 画面上部の不要な余白を詰める */
+    header, footer { visibility: hidden; height: 0; }
     .card {
         display: inline-block;
-        font-size: 1.5rem;
-        padding: 10px 18px;
-        margin: 3px;
+        font-size: 1.2rem;
+        padding: 8px 12px;
+        margin: 2px;
         border: 3px solid #333;
         border-radius: 8px;
         background: linear-gradient(145deg, #ffffff, #e6e6e6);
-        box-shadow: 3px 3px 6px #999;
+        box-shadow: 2px 2px 4px #999;
     }
     .card-x { border-color: #e74c3c; color: #e74c3c; }
     .card-y { border-color: #3498db; color: #3498db; }
     .card-z { border-color: #2ecc71; color: #2ecc71; }
     .win-text { 
         color: #27ae60; 
-        font-size: 2.2rem; 
+        font-size: 1.8rem; 
         font-weight: bold;
         text-align: center;
-        margin: 0.3rem 0 !important;
+        margin: 0.2rem 0 !important;
     }
     .lose-text { 
         color: #e74c3c; 
-        font-size: 2.2rem; 
+        font-size: 1.8rem; 
         font-weight: bold;
         text-align: center;
-        margin: 0.3rem 0 !important;
+        margin: 0.2rem 0 !important;
     }
     .draw-text { 
         color: #f39c12; 
-        font-size: 2.2rem; 
+        font-size: 1.8rem; 
         font-weight: bold;
         text-align: center;
-        margin: 0.3rem 0 !important;
+        margin: 0.2rem 0 !important;
     }
     .cpu-comment {
-        font-size: 1.4rem;
+        font-size: 1.1rem;
         font-weight: bold;
         text-align: center;
-        padding: 12px;
+        padding: 8px;
         background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
         border-radius: 10px;
-        margin: 5px 0;
+        margin: 4px 0;
         color: #333333;
     }
     .result-text {
-        font-size: 1.5rem;
+        font-size: 1.2rem;
         font-weight: bold;
         text-align: center;
-        margin: 0.3rem 0 !important;
+        margin: 0.2rem 0 !important;
     }
     /* ボタンの余白を減らす */
     .stButton > button {
-        margin-top: 0.2rem;
-        margin-bottom: 0.2rem;
+        margin-top: 0.1rem;
+        margin-bottom: 0.1rem;
+        padding: 0.35rem 0.6rem;
+        font-size: 0.9rem;
     }
     /* ラジオボタンの余白を減らす */
     .stRadio > div {
-        gap: 0.3rem;
+        gap: 0.2rem;
+    }
+    /* モバイル用の文字サイズ調整 */
+    @media (max-width: 480px) {
+        h1 { font-size: 1.4rem !important; }
+        h2 { font-size: 1.2rem !important; }
+        h3 { font-size: 1.05rem !important; }
+        h4, h5 { font-size: 0.95rem !important; }
+        .stMarkdown, p { font-size: 0.9rem !important; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -275,7 +290,7 @@ init_session_state()
 if st.session_state.game_state == 'title':
     st.markdown("# 🎴 X/Y/Z カード対戦ゲーム")
     
-    with st.expander("📖 ルール説明", expanded=True):
+    with st.expander("📖 ルール説明", expanded=False):
         st.markdown("""
         ### 基本ルール
         - X/Y/Zの3枚がランダムに配られます
@@ -300,7 +315,7 @@ if st.session_state.game_state == 'title':
         | 「知らん、早くしろ」 | 2枚+1枚 |
         """)
     
-    with st.expander("🔥 難易度モード"):
+    with st.expander("🔥 難易度モード", expanded=False):
         st.markdown("""
         | 連勝数 | モード | 特徴 |
         |--------|--------|------|
@@ -323,14 +338,10 @@ if st.session_state.game_state == 'title':
 elif st.session_state.game_state == 'playing':
     mode, mode_icon = get_difficulty_mode(st.session_state.win_count)
     
-    # ヘッダー
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        st.markdown(f"## 第{st.session_state.win_count + 1}戦")
-    with col2:
-        st.markdown(f"### {mode_icon} {mode}モード")
-    
-    st.markdown(f"### 🏆 現在 {st.session_state.win_count} 連勝中")
+    # ヘッダー（1行にまとめて縦幅を削減）
+    st.markdown(
+        f"### 第{st.session_state.win_count + 1}戦　{mode_icon} {mode}モード（{st.session_state.win_count}連勝中）"
+    )
     st.markdown("---")
     
     # プレイヤーの手札
