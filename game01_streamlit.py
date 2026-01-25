@@ -150,10 +150,15 @@ def compare_hands(player_hand, cpu_hand):
     if player_rank != cpu_rank:
         return 1 if player_rank > cpu_rank else -1
     
-    # 同じ役同士の場合、マジョリティで勝負
+    # 同じ役同士の場合
+    # 3種全部同士は力関係が成立しないため引き分け
+    if player_rank == 2:
+        return 0
+
+    # それ以外はマジョリティで勝負
     player_maj = get_majority(player_hand)
     cpu_maj = get_majority(cpu_hand)
-    
+
     if player_maj == cpu_maj:
         return 0
     return 1 if WINS_AGAINST[player_maj] == cpu_maj else -1
