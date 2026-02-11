@@ -7,7 +7,7 @@ try:
     # 起きたときの処理を except に書ける仕組み
     while True: # メインのプログラムのループ
         print(' ' * indent, end='')
-        print('********')
+        print('*************')
         time.sleep(0.1) # 0.1秒間止める
         if indent_increasing:
             # インデントを増やす
@@ -24,3 +24,4 @@ try:
 except KeyboardInterrupt:
     sys.exit() # Ctrl-Cで終了
 # finally: エラーの有無に関係なく必ず実行（後片付け向き、任意）を追加することも
+
