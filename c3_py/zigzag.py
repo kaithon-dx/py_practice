@@ -1,4 +1,5 @@
-import time, sys
+import time
+import sys
 indent = 0 # インデントの幅
 indent_increasing = True # インデントが増えているかどうか
 
